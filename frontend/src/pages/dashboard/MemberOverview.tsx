@@ -12,7 +12,8 @@ export function MemberOverview() {
 
     const [schedule, setSchedule] = useState<any[]>([]);
     const [completions, setCompletions] = useState<any[]>([]);
-    const [activePlan, setActivePlan] = useState<any>(null);
+    const [activePlan, setActivePlan] = useState<any>(null); // Workout Plan
+    const [membership, setMembership] = useState<any>(null); // Membership Plan (Billing)
     const [isMembershipModalOpen, setIsMembershipModalOpen] = useState(false);
 
     useEffect(() => {
@@ -26,6 +27,10 @@ export function MemberOverview() {
 
             apiRequest(`/members/${user.id}/schedule/completions`)
                 .then(setCompletions)
+                .catch(console.error);
+
+            apiRequest(`/members/${user.id}/membership`)
+                .then(setMembership)
                 .catch(console.error);
         }
     }, [user?.id]);
@@ -96,6 +101,7 @@ export function MemberOverview() {
                 <div className="space-y-6">
                     {/* Stat Cards */}
                     <div className="grid gap-4 sm:grid-cols-3">
+                        {/* Member Active/Inactive Status Card */}
                         <div className="group relative overflow-hidden rounded-2xl border border-border/60 bg-card/95 p-5 shadow-soft transition-all hover:shadow-glow hover:-translate-y-1">
                             <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                             <div className="relative z-10">
@@ -103,13 +109,19 @@ export function MemberOverview() {
                                     <div className="p-2.5 bg-emerald-500/10 text-emerald-600 rounded-xl">
                                         <UserCheck className="h-5 w-5" />
                                     </div>
-                                    <span className="text-xs font-semibold uppercase tracking-wider text-emerald-600 bg-emerald-500/5 px-2 py-1 rounded-md">Active</span>
+                                    <span className={`text-xs font-semibold uppercase tracking-wider px-2 py-1 rounded-md ${membership ? 'text-emerald-600 bg-emerald-500/5' : 'text-red-600 bg-red-500/5'}`}>
+                                        {membership ? 'Active' : 'Inactive'}
+                                    </span>
                                 </div>
                                 <p className="text-sm text-muted-foreground">Membership</p>
-                                <p className="text-xl font-bold mt-1">Standard Plan</p>
+                                <p className="text-xl font-bold mt-1 truncate">{membership ? membership.plan_name : 'No Active Plan'}</p>
+                                {membership?.end_date && (
+                                    <p className="text-xs text-muted-foreground mt-1">Expires: {new Date(membership.end_date).toLocaleDateString()}</p>
+                                )}
                             </div>
                         </div>
 
+                        {/* Upcoming Workout Card */}
                         <div className="group relative overflow-hidden rounded-2xl border border-border/60 bg-card/95 p-5 shadow-soft transition-all hover:shadow-glow hover:-translate-y-1">
                             <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                             <div className="relative z-10">
@@ -124,6 +136,7 @@ export function MemberOverview() {
                             </div>
                         </div>
 
+                        {/* Streak Card */}
                         <div className="group relative overflow-hidden rounded-2xl border border-border/60 bg-card/95 p-5 shadow-soft transition-all hover:shadow-glow hover:-translate-y-1">
                             <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                             <div className="relative z-10">

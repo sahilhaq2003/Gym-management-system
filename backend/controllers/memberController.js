@@ -168,3 +168,23 @@ exports.toggleScheduleCompletion = async (req, res) => {
         res.status(500).json({ message: 'Server error', error: error.message });
     }
 };
+
+exports.getMemberMembership = async (req, res) => {
+    try {
+        const [memberships] = await db.execute(`
+            SELECT m.*, mp.name as plan_name, mp.description 
+            FROM memberships m
+            JOIN membership_plans mp ON m.plan_id = mp.id
+            WHERE m.member_id = ? AND m.status = 'active'
+            ORDER BY m.end_date DESC
+            LIMIT 1
+        `, [req.params.id]);
+
+        if (memberships.length === 0) {
+            return res.json(null);
+        }
+        res.json(memberships[0]);
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};

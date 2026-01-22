@@ -18,4 +18,7 @@ router.delete('/:id/schedule/:itemId', require('../controllers/memberController'
 router.get('/:id/schedule/completions', require('../controllers/memberController').getScheduleCompletions);
 router.post('/:id/schedule/:itemId/completion', require('../controllers/memberController').toggleScheduleCompletion);
 
+// Membership Routes
+router.get('/:id/membership', require('../controllers/memberController').getMemberMembership);
+
 module.exports = router;

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Save, Loader2, Trash2, Fingerprint } from 'lucide-react';
+import { ArrowLeft, Save, Loader2, Trash2, Fingerprint, CreditCard } from 'lucide-react';
 import { apiRequest } from '../../lib/api';
 import { registerFingerprint } from '../../lib/webauthn';
 import { ScheduleManager } from '../../components/members/ScheduleManager';
@@ -10,6 +10,7 @@ export function EditMember() {
     const navigate = useNavigate();
     const [isLoading, setIsLoading] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
+    const [membership, setMembership] = useState<any>(null); // State for membership details
     // Initialize with safe defaults, but will populate from API
     const [formData, setFormData] = useState({
         first_name: '',
@@ -37,6 +38,11 @@ export function EditMember() {
                     address: data.address || ''
                 };
                 setFormData(formattedData);
+
+                // Fetch Membership Data
+                const memData = await apiRequest(`/members/${id}/membership`);
+                setMembership(memData);
+
             } catch (error) {
                 console.error('Failed to fetch member:', error);
                 alert('Could not load member details.');
@@ -238,6 +244,27 @@ export function EditMember() {
                         />
                     </div>
 
+
+                    {/* Membership & Payment Status */}
+                    <div className="p-4 border border-border rounded-lg bg-background/50 flex flex-col sm:flex-row items-center justify-between gap-4">
+                        <div className="flex items-center gap-3 w-full">
+                            <div className="p-2 bg-blue-500/10 rounded-full text-blue-600">
+                                <CreditCard className="h-5 w-5" />
+                            </div>
+                            <div className="flex-1">
+                                <h4 className="font-medium text-sm">Active Membership</h4>
+                                <div className="flex items-center justify-between mt-1">
+                                    <p className="text-sm font-semibold">{membership ? membership.plan_name : 'No Active Plan'}</p>
+                                    {membership?.end_date && (
+                                        <div className={`px-2 py-0.5 rounded text-xs font-medium ${new Date(membership.end_date) < new Date() ? 'bg-red-500/10 text-red-600' : 'bg-green-500/10 text-green-600'}`}>
+                                            Expires: {new Date(membership.end_date).toLocaleDateString()}
+                                        </div>
+                                    )}
+                                </div>
+                                {membership?.description && <p className="text-xs text-muted-foreground mt-0.5">{membership.description}</p>}
+                            </div>
+                        </div>
+                    </div>
 
                     {/* Fingerprint Management Section */}
                     <div className="p-4 border border-border rounded-lg bg-background/50 flex flex-col sm:flex-row items-center justify-between gap-4">
