@@ -28,7 +28,9 @@ export function ScheduleManager({ memberId }: { memberId: string | undefined }) 
     const fetchSchedule = async () => {
         try {
             const data = await apiRequest(`/members/${memberId}/schedule`);
-            setSchedule(data);
+            // Handle new response format { schedule: [], plan: {} }
+            const scheduleData = Array.isArray(data) ? data : (data.schedule || []);
+            setSchedule(Array.isArray(scheduleData) ? scheduleData : []);
         } catch (error) {
             console.error('Failed to fetch schedule:', error);
         }

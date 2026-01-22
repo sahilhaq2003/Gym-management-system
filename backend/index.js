@@ -33,6 +33,7 @@ app.use('/api/payments', paymentRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/biometrics', fingerprintRoutes);
 app.use('/api/memberships', require('./routes/membershipRoutes'));
+app.use('/api/workout-plans', require('./routes/workoutPlanRoutes'));
 
 const PORT = process.env.PORT || 5000;
 

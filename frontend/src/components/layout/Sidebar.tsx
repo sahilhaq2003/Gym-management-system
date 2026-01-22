@@ -9,7 +9,7 @@ export function Sidebar() {
     const allItems = [
         { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard', roles: ['admin', 'staff', 'member', 'trainer'] },
         { icon: Users, label: 'Members', path: '/members', roles: ['admin', 'staff'] },
-        { icon: FileText, label: 'Plans', path: '/plans', roles: ['admin'] },
+        { icon: FileText, label: 'Plans', path: '/workout-plans', roles: ['admin'] },
         { icon: CalendarCheck, label: 'Attendance', path: '/attendance', roles: ['admin', 'staff'] },
         { icon: Fingerprint, label: 'Check-in Kiosk', path: '/attendance/test', roles: ['admin', 'staff'] },
         { icon: CreditCard, label: 'Payments', path: '/payments', roles: ['admin'] },

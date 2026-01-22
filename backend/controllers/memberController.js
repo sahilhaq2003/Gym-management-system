@@ -84,7 +84,17 @@ exports.deleteMember = async (req, res) => {
 exports.getMemberSchedule = async (req, res) => {
     try {
         const [schedule] = await db.execute('SELECT * FROM member_schedules WHERE member_id = ? ORDER BY FIELD(day_of_week, "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")', [req.params.id]);
-        res.json(schedule);
+
+        // Fetch active plan info
+        const [members] = await db.execute('SELECT active_plan_id FROM members WHERE id = ?', [req.params.id]);
+        let plan = null;
+
+        if (members.length > 0 && members[0].active_plan_id) {
+            const [plans] = await db.execute('SELECT * FROM workout_plans WHERE id = ?', [members[0].active_plan_id]);
+            if (plans.length > 0) plan = plans[0];
+        }
+
+        res.json({ schedule, plan });
     } catch (error) {
         res.status(500).json({ message: 'Server error', error: error.message });
     }

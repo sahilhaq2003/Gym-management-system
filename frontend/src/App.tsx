@@ -8,7 +8,9 @@ import { AddMember } from './pages/members/AddMember';
 import { EditMember } from './pages/members/EditMember';
 import { Attendance } from './pages/attendance/Attendance';
 import { AttendanceTest } from './pages/attendance/AttendanceTest';
+import { AttendanceMarkingPage } from './pages/attendance/AttendanceMarkingPage';
 import { Payments } from './pages/payments/Payments';
+import { WorkoutPlans } from './pages/dashboard/WorkoutPlans';
 
 import { MemberOverview } from './pages/dashboard/MemberOverview';
 import { Home } from './pages/Home';
@@ -37,6 +39,12 @@ function AppRoutes() {
       <Route path="/login" element={!isAuthenticated ? <Login /> : <Navigate to="/dashboard" replace />} />
       <Route path="/" element={<Home />} />
 
+      {/* Dedicated Attendance Page (Public/Kiosk) */}
+      <Route
+        path="/attendance-marking"
+        element={<AttendanceMarkingPage />}
+      />
+
       <Route element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/members" element={<MembersList />} />
@@ -44,7 +52,9 @@ function AppRoutes() {
         <Route path="/members/edit/:id" element={<EditMember />} />
         <Route path="/attendance" element={<Attendance />} />
         <Route path="/attendance/test" element={<AttendanceTest />} />
+        <Route path="/attendance/test" element={<AttendanceTest />} />
         <Route path="/payments" element={<Payments />} />
+        <Route path="/workout-plans" element={<WorkoutPlans />} />
         <Route path="/settings" element={<div className="p-4">Settings Page (Coming Soon)</div>} />
       </Route>
 

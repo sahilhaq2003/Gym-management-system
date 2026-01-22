@@ -12,12 +12,16 @@ export function MemberOverview() {
 
     const [schedule, setSchedule] = useState<any[]>([]);
     const [completions, setCompletions] = useState<any[]>([]);
+    const [activePlan, setActivePlan] = useState<any>(null);
     const [isMembershipModalOpen, setIsMembershipModalOpen] = useState(false);
 
     useEffect(() => {
         if (user?.id) {
             apiRequest(`/members/${user.id}/schedule`)
-                .then(setSchedule)
+                .then(data => {
+                    setSchedule(data.schedule || data); // Handle both old array and new object format
+                    if (data.plan) setActivePlan(data.plan);
+                })
                 .catch(console.error);
 
             apiRequest(`/members/${user.id}/schedule/completions`)
@@ -140,7 +144,17 @@ export function MemberOverview() {
                         <div className="p-6 border-b border-border/50 flex items-center justify-between">
                             <div>
                                 <h3 className="text-lg font-semibold">Your Weekly Schedule</h3>
-                                <p className="text-sm text-muted-foreground">Check off items as you complete them!</p>
+                                <div className="flex flex-col gap-1">
+                                    {activePlan ? (
+                                        <div className="flex items-center gap-2 mt-1">
+                                            <span className="text-sm font-medium text-primary">{activePlan.name}</span>
+                                            <span className="text-xs px-2 py-0.5 rounded-full bg-secondary text-secondary-foreground">{activePlan.difficulty_level}</span>
+                                        </div>
+                                    ) : (
+                                        <p className="text-sm text-muted-foreground">Check off items as you complete them!</p>
+                                    )}
+                                    {activePlan && <p className="text-xs text-muted-foreground mt-1">{activePlan.description}</p>}
+                                </div>
                             </div>
                         </div>
                         <div className="divide-y divide-border/50">

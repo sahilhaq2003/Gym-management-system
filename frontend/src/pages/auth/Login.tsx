@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { Dumbbell, Loader2 } from 'lucide-react';
+import { Dumbbell, Loader2, ArrowLeft } from 'lucide-react';
 
 export function Login() {
     const [email, setEmail] = useState('');
@@ -10,6 +10,7 @@ export function Login() {
     const [error, setError] = useState('');
     const { login } = useAuth();
     const navigate = useNavigate();
+    const location = useLocation();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -30,7 +31,10 @@ export function Login() {
             }
 
             login(data.token, data.user);
-            navigate('/dashboard');
+
+            // Check for redirect location
+            const from = (location.state as any)?.from?.pathname || '/dashboard';
+            navigate(from, { replace: true });
         } catch (err: any) {
             setError(err.message);
         } finally {
@@ -40,6 +44,13 @@ export function Login() {
 
     return (
         <div className="relative min-h-screen bg-[#030721] text-foreground">
+            <button
+                onClick={() => navigate('/')}
+                className="absolute top-6 left-6 z-50 p-2 text-white/50 hover:text-white hover:bg-white/10 rounded-full transition-colors"
+            >
+                <ArrowLeft className="w-6 h-6" />
+            </button>
+
             <div className="absolute inset-0 overflow-hidden">
                 <div className="absolute -left-24 top-8 h-72 w-72 rounded-full bg-primary/30 blur-3xl" />
                 <div className="absolute right-[-4rem] bottom-[-6rem] h-[22rem] w-[22rem] rounded-full bg-primary/20 blur-3xl" />
