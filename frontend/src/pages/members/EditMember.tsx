@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Save, Loader2, Trash2, Fingerprint } from 'lucide-react';
 import { apiRequest } from '../../lib/api';
 import { registerFingerprint } from '../../lib/webauthn';
+import { ScheduleManager } from '../../components/members/ScheduleManager';
 
 export function EditMember() {
     const { id } = useParams();
@@ -237,6 +238,7 @@ export function EditMember() {
                         />
                     </div>
 
+
                     {/* Fingerprint Management Section */}
                     <div className="p-4 border border-border rounded-lg bg-background/50 flex flex-col sm:flex-row items-center justify-between gap-4">
                         <div className="flex items-center gap-3">
@@ -256,6 +258,16 @@ export function EditMember() {
                             Register New Fingerprint
                         </button>
                     </div>
+
+                    {/* Schedule Management Section */}
+                    <div className="p-6 border border-border rounded-xl bg-background/50 space-y-4">
+                        <div className="flex items-center justify-between">
+                            <h3 className="text-lg font-semibold">Weekly Schedule</h3>
+                        </div>
+
+                        <ScheduleManager memberId={id} />
+                    </div>
+
 
                     <div className="flex justify-end gap-3 pt-4 border-t border-border">
                         <button

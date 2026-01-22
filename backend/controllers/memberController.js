@@ -80,3 +80,81 @@ exports.deleteMember = async (req, res) => {
         res.status(500).json({ message: 'Server error. This member might have dependent records.', error: error.message });
     }
 };
+
+exports.getMemberSchedule = async (req, res) => {
+    try {
+        const [schedule] = await db.execute('SELECT * FROM member_schedules WHERE member_id = ? ORDER BY FIELD(day_of_week, "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")', [req.params.id]);
+        res.json(schedule);
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
+exports.updateMemberSchedule = async (req, res) => {
+    const { id } = req.params; // member_id
+    const { day, activity, time, type, trainer } = req.body;
+
+    try {
+        // Upsert logic: Delete existing for that day and insert new (simpler than complex update for now)
+        // Or actually, let's just insert. If we want to replace, we should probably have a specific ID or delete first.
+        // For this simple implementation, let's assume one activity per day per type or just list them.
+        // Let's just add a new item. Deletion can be separate.
+
+        const [result] = await db.execute(
+            'INSERT INTO member_schedules (member_id, day_of_week, activity, time, type, trainer) VALUES (?, ?, ?, ?, ?, ?)',
+            [id, day, activity, time, type || 'Gym', trainer || null]
+        );
+        res.status(201).json({ id: result.insertId, message: 'Schedule added' });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
+exports.deleteScheduleItem = async (req, res) => {
+    try {
+        await db.execute('DELETE FROM member_schedules WHERE id = ?', [req.params.itemId]);
+        res.json({ message: 'Schedule item removed' });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
+exports.getScheduleCompletions = async (req, res) => {
+    const { id } = req.params;
+    // Get completions for the last 7 days + future
+    // Actually, just get all completions for this member for simplicity or filter by recent date in frontend
+    // Let's filter by last 30 days to keep it light
+    try {
+        const [completions] = await db.execute(
+            'SELECT * FROM activity_completions WHERE member_id = ? AND completion_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)',
+            [id]
+        );
+        res.json(completions);
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
+exports.toggleScheduleCompletion = async (req, res) => {
+    const { id, itemId } = req.params; // member_id, schedule_id
+    const { date, completed } = req.body; // date in YYYY-MM-DD
+
+    try {
+        if (completed) {
+            // Mark as done
+            await db.execute(
+                'INSERT IGNORE INTO activity_completions (member_id, schedule_id, completion_date) VALUES (?, ?, ?)',
+                [id, itemId, date]
+            );
+        } else {
+            // Unmark
+            await db.execute(
+                'DELETE FROM activity_completions WHERE member_id = ? AND schedule_id = ? AND completion_date = ?',
+                [id, itemId, date]
+            );
+        }
+        res.json({ success: true });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};

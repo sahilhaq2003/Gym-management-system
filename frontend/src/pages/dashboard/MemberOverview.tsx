@@ -1,4 +1,7 @@
+import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { apiRequest } from '../../lib/api';
+import { MembershipModal } from '../../components/dashboard/MembershipModal';
 import { UserCheck, Calendar, Trophy, QrCode, Clock, Dumbbell, Zap, Activity } from 'lucide-react';
 
 export function MemberOverview() {
@@ -6,6 +9,51 @@ export function MemberOverview() {
 
     // Mock user data simulation
     const streak = 12;
+
+    const [schedule, setSchedule] = useState<any[]>([]);
+    const [completions, setCompletions] = useState<any[]>([]);
+    const [isMembershipModalOpen, setIsMembershipModalOpen] = useState(false);
+
+    useEffect(() => {
+        if (user?.id) {
+            apiRequest(`/members/${user.id}/schedule`)
+                .then(setSchedule)
+                .catch(console.error);
+
+            apiRequest(`/members/${user.id}/schedule/completions`)
+                .then(setCompletions)
+                .catch(console.error);
+        }
+    }, [user?.id]);
+
+    const handleToggleComplete = async (scheduleId: number) => {
+        if (!user?.id) return;
+        const todayStr = new Date().toISOString().split('T')[0];
+        const isCompleted = completions.some(c => c.schedule_id === scheduleId && c.completion_date.startsWith(todayStr));
+
+        try {
+            await apiRequest(`/members/${user.id}/schedule/${scheduleId}/completion`, {
+                method: 'POST',
+                body: JSON.stringify({
+                    date: todayStr,
+                    completed: !isCompleted
+                })
+            });
+
+            // Optimistic update
+            if (isCompleted) {
+                setCompletions(prev => prev.filter(c => !(c.schedule_id === scheduleId && c.completion_date.startsWith(todayStr))));
+            } else {
+                setCompletions(prev => [...prev, { member_id: user.id, schedule_id: scheduleId, completion_date: todayStr }]);
+            }
+        } catch (error) {
+            console.error('Failed to toggle completion:', error);
+        }
+    };
+
+    // Calculate next workout (simple logic: first item in schedule that matches today or after)
+    const today = new Date().toLocaleDateString('en-US', { weekday: 'short' });
+    const nextWorkoutItem = schedule.find(s => s.day_of_week === today) || schedule[0];
 
     return (
         <div className="space-y-8 animate-in fade-in duration-500">
@@ -17,12 +65,26 @@ export function MemberOverview() {
                     </h1>
                     <p className="text-muted-foreground">Here's your fitness journey at a glance.</p>
                 </div>
-                <div className="flex items-center gap-3 bg-card border border-border/60 rounded-full px-4 py-2 shadow-sm">
-                    <div className="text-sm font-medium">
-                        Active Member
+                <div className="flex items-center gap-3">
+                    <button
+                        onClick={() => setIsMembershipModalOpen(true)}
+                        className="px-4 py-2 text-sm font-medium bg-primary text-primary-foreground rounded-full hover:bg-primary/90 transition-colors shadow-sm"
+                    >
+                        Renew / Upgrade
+                    </button>
+                    <div className="flex items-center gap-3 bg-card border border-border/60 rounded-full px-4 py-2 shadow-sm">
+                        <div className="text-sm font-medium">
+                            Active Member
+                        </div>
                     </div>
                 </div>
             </div>
+
+            <MembershipModal
+                isOpen={isMembershipModalOpen}
+                onClose={() => setIsMembershipModalOpen(false)}
+                memberId={user?.id ? parseInt(String(user.id)) : 0}
+            />
 
             <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
 
@@ -51,10 +113,10 @@ export function MemberOverview() {
                                     <div className="p-2.5 bg-blue-500/10 text-blue-600 rounded-xl">
                                         <Calendar className="h-5 w-5" />
                                     </div>
-                                    <span className="text-xs font-semibold text-blue-600 bg-blue-500/5 px-2 py-1 rounded-md">Today</span>
+                                    <span className="text-xs font-semibold text-blue-600 bg-blue-500/5 px-2 py-1 rounded-md">Next Up</span>
                                 </div>
-                                <p className="text-sm text-muted-foreground">Next Session</p>
-                                <p className="text-xl font-bold mt-1">5:00 PM</p>
+                                <p className="text-sm text-muted-foreground">Upcoming</p>
+                                <p className="text-xl font-bold mt-1 truncate">{nextWorkoutItem ? nextWorkoutItem.activity : 'Rest Day'}</p>
                             </div>
                         </div>
 
@@ -65,9 +127,9 @@ export function MemberOverview() {
                                     <div className="p-2.5 bg-orange-500/10 text-orange-600 rounded-xl">
                                         <Trophy className="h-5 w-5" />
                                     </div>
-                                    <span className="text-xs font-semibold text-orange-600 bg-orange-500/5 px-2 py-1 rounded-md">On Fire!</span>
+                                    <span className="text-xs font-semibold text-orange-600 bg-orange-500/5 px-2 py-1 rounded-md">Streak</span>
                                 </div>
-                                <p className="text-sm text-muted-foreground">Current Streak</p>
+                                <p className="text-sm text-muted-foreground">Consistency</p>
                                 <p className="text-xl font-bold mt-1">{streak} Days</p>
                             </div>
                         </div>
@@ -78,33 +140,45 @@ export function MemberOverview() {
                         <div className="p-6 border-b border-border/50 flex items-center justify-between">
                             <div>
                                 <h3 className="text-lg font-semibold">Your Weekly Schedule</h3>
-                                <p className="text-sm text-muted-foreground">Upcoming classes and training sessions</p>
+                                <p className="text-sm text-muted-foreground">Check off items as you complete them!</p>
                             </div>
-                            <button className="text-sm font-medium text-primary hover:text-primary/80 transition-colors">View All</button>
                         </div>
                         <div className="divide-y divide-border/50">
-                            {[
-                                { day: "Mon", date: "22", title: "Leg Day & Cardio", time: "05:00 PM", trainer: "Alex T.", type: "Gym" },
-                                { day: "Wed", date: "24", title: "HIIT Blast", time: "06:00 PM", trainer: "Sarah K.", type: "Class" },
-                                { day: "Fri", date: "26", title: "Yoga Flow", time: "08:00 AM", trainer: "Emma W.", type: "Class" },
-                            ].map((item, i) => (
-                                <div key={i} className="p-4 flex items-center gap-4 hover:bg-muted/30 transition-colors group cursor-pointer">
-                                    <div className="flex flex-col items-center justify-center h-14 w-14 rounded-xl bg-muted text-foreground border border-border">
-                                        <span className="text-xs font-medium uppercase text-muted-foreground">{item.day}</span>
-                                        <span className="text-lg font-bold">{item.date}</span>
-                                    </div>
-                                    <div className="flex-1">
-                                        <h4 className="font-semibold text-foreground group-hover:text-primary transition-colors">{item.title}</h4>
-                                        <div className="flex items-center gap-3 text-sm text-muted-foreground mt-1">
-                                            <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {item.time}</span>
-                                            <span className="flex items-center gap-1"><Dumbbell className="w-3 h-3" /> {item.trainer}</span>
+                            {schedule.length > 0 ? schedule.map((item, i) => {
+                                const isCompleted = completions.some(c => c.schedule_id === item.id && c.completion_date.startsWith(new Date().toISOString().split('T')[0]));
+                                const isToday = item.day_of_week === today;
+
+                                return (
+                                    <div key={i} className={`p-4 flex items-center gap-4 transition-colors group ${isCompleted ? 'bg-muted/40' : 'hover:bg-muted/30'}`}>
+                                        <button
+                                            onClick={() => handleToggleComplete(item.id)}
+                                            disabled={!isToday}
+                                            className={`flex flex-col items-center justify-center h-14 w-14 rounded-xl border transition-all ${isCompleted ? 'bg-green-500 text-white border-green-500' : 'bg-muted text-foreground border-border hover:border-primary/50'} ${!isToday && !isCompleted ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                        >
+                                            {isCompleted ? <UserCheck className="w-6 h-6" /> : (
+                                                <>
+                                                    <span className="text-xs font-medium uppercase text-muted-foreground">{item.day_of_week.substring(0, 3)}</span>
+                                                    {/* <span className="text-lg font-bold">Done?</span> */}
+                                                </>
+                                            )}
+                                        </button>
+                                        <div className="flex-1">
+                                            <h4 className={`font-semibold transition-colors ${isCompleted ? 'text-muted-foreground line-through' : 'text-foreground group-hover:text-primary'}`}>{item.activity}</h4>
+                                            <div className="flex items-center gap-3 text-sm text-muted-foreground mt-1">
+                                                <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {item.time}</span>
+                                                {item.trainer && <span className="flex items-center gap-1"><Dumbbell className="w-3 h-3" /> {item.trainer}</span>}
+                                            </div>
+                                        </div>
+                                        <div className={`px-3 py-1 rounded-full text-xs font-medium ${isCompleted ? 'bg-green-500/10 text-green-600' : item.type === 'Class' ? 'bg-purple-500/10 text-purple-600' : 'bg-blue-500/10 text-blue-600'}`}>
+                                            {isCompleted ? 'Done' : item.type}
                                         </div>
                                     </div>
-                                    <div className={`px-3 py-1 rounded-full text-xs font-medium ${item.type === 'Class' ? 'bg-purple-500/10 text-purple-600' : 'bg-blue-500/10 text-blue-600'}`}>
-                                        {item.type}
-                                    </div>
+                                )
+                            }) : (
+                                <div className="p-8 text-center text-muted-foreground">
+                                    No schedule assigned yet. Ask your trainer to set one up!
                                 </div>
-                            ))}
+                            )}
                         </div>
                     </div>
                 </div>

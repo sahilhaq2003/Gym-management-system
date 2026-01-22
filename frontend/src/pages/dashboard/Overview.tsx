@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Users, DollarSign, UserCheck, AlertCircle, ArrowUpRight, Zap, Dumbbell, ShoppingBag, ArrowRight } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { apiRequest } from '../../lib/api';
+import { PendingApprovals } from '../../components/dashboard/PendingApprovals';
 
 type DashboardStats = {
     totalMembers: number;
@@ -252,32 +253,39 @@ export function Overview() {
                 </div>
             </section>
 
-            {/* Featured Promotions (Bottom Row) */}
-            <section>
-                <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-lg font-semibold text-foreground">Active Campaigns</h3>
-                    <button className="text-sm font-medium text-primary hover:underline">View All</button>
-                </div>
-                <div className="grid gap-6 md:grid-cols-3">
-                    {[
-                        { title: "Summer Shred", desc: "8-week intensity program", color: "orange", icon: Dumbbell },
-                        { title: "Protein Sale", desc: "Clearance on old stock", color: "emerald", icon: ShoppingBag }
-                    ].map((item, i) => (
-                        <div key={i} className={`group relative overflow-hidden rounded-xl border border-border/50 bg-card p-4 transition-all hover:border-${item.color}-500/30 hover:shadow-md cursor-pointer`}>
-                            <div className="flex items-start gap-4">
-                                <div className={`p-3 rounded-lg bg-${item.color}-500/10 text-${item.color}-600 group-hover:scale-110 transition-transform`}>
-                                    <item.icon className="h-5 w-5" />
+
+            {/* Featured Promotions & Pending Requests */}
+            <section className="grid gap-6 md:grid-cols-2">
+                <div>
+                    <div className="flex items-center justify-between mb-6">
+                        <h3 className="text-lg font-semibold text-foreground">Active Campaigns</h3>
+                        <button className="text-sm font-medium text-primary hover:underline">View All</button>
+                    </div>
+                    <div className="grid gap-6 sm:grid-cols-2">
+                        {[
+                            { title: "Summer Shred", desc: "8-week intensity program", color: "orange", icon: Dumbbell },
+                            { title: "Protein Sale", desc: "Clearance on old stock", color: "emerald", icon: ShoppingBag }
+                        ].map((item, i) => (
+                            <div key={i} className={`group relative overflow-hidden rounded-xl border border-border/50 bg-card p-4 transition-all hover:border-${item.color}-500/30 hover:shadow-md cursor-pointer`}>
+                                <div className="flex items-start gap-4">
+                                    <div className={`p-3 rounded-lg bg-${item.color}-500/10 text-${item.color}-600 group-hover:scale-110 transition-transform`}>
+                                        <item.icon className="h-5 w-5" />
+                                    </div>
+                                    <div>
+                                        <h4 className="font-semibold text-sm">{item.title}</h4>
+                                        <p className="text-xs text-muted-foreground mt-1">{item.desc}</p>
+                                    </div>
                                 </div>
-                                <div>
-                                    <h4 className="font-semibold text-sm">{item.title}</h4>
-                                    <p className="text-xs text-muted-foreground mt-1">{item.desc}</p>
-                                </div>
+                                <div className={`absolute bottom-0 left-0 h-1 w-0 bg-${item.color}-500 transition-all duration-300 group-hover:w-full`} />
                             </div>
-                            <div className={`absolute bottom-0 left-0 h-1 w-0 bg-${item.color}-500 transition-all duration-300 group-hover:w-full`} />
-                        </div>
-                    ))}
+                        ))}
+                    </div>
                 </div>
+
+                {/* Pending Memberships */}
+                <PendingApprovals />
             </section>
+
         </div>
     );
 }
