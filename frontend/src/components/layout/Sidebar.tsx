@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, CreditCard, CalendarCheck, Settings, LogOut, FileText, Fingerprint, Activity } from 'lucide-react';
+import { LayoutDashboard, Users, CreditCard, CalendarCheck, LogOut, FileText, Fingerprint, Activity } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import { cn } from '../../lib/utils';
 import { useAuth } from '../../context/AuthContext';
@@ -13,8 +13,6 @@ export function Sidebar() {
         { icon: CalendarCheck, label: 'Attendance', path: '/attendance', roles: ['admin', 'staff'] },
         { icon: Fingerprint, label: 'Check-in Kiosk', path: '/attendance/test', roles: ['admin', 'staff'] },
         { icon: CreditCard, label: 'Payments', path: '/payments', roles: ['admin'] },
-        { icon: Fingerprint, label: 'Devices', path: '/devices', roles: ['admin', 'staff'] },
-        { icon: Settings, label: 'Settings', path: '/settings', roles: ['admin', 'staff', 'member'] },
     ];
 
     const sidebarItems = allItems.filter(item => item.roles.includes(user?.role || ''));
