@@ -1,0 +1,77 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 222 47% 99%;
+    --foreground: 222 47% 11%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 12%;
+
+    --muted: 214 32% 96%;
+    --muted-foreground: 215 20% 46%;
+
+    --accent: 221 74% 92%;
+    --accent-foreground: 223 47% 15%;
+
+    --primary: 226 74% 55%;
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 221 28% 88%;
+    --secondary-foreground: 223 47% 15%;
+
+    --destructive: 0 84% 49%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 214 32% 88%;
+    --input: 214 32% 86%;
+    --ring: 226 84% 67%;
+  }
+
+  /* Remove global @apply border-border, as it causes build errors. Use border-border only on elements that need custom border color. */
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    background-image: linear-gradient(180deg, rgba(226, 232, 240, 0.55) 0%, rgba(237, 233, 254, 0.35) 45%, rgba(255, 255, 255, 0.8) 100%);
+    min-height: 100vh;
+  }
+
+  button,
+  input,
+  textarea,
+  select {
+    @apply font-sans;
+  }
+}
+
+@layer utilities {
+  .card-surface {
+    @apply rounded-xl border border-border/60 bg-white/70 shadow-sm backdrop-blur-xl transition-all duration-300;
+  }
+
+  .card-surface:hover {
+    @apply shadow-md border-primary/20 -translate-y-0.5;
+  }
+}
+
+/* Custom Scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
