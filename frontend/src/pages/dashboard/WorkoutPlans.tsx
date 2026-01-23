@@ -209,9 +209,9 @@ function AssignPlanModal({ planId, onClose }: { planId: number; onClose: () => v
             });
             alert('Plan assigned successfully to selected members!');
             onClose();
-        } catch (error) {
+        } catch (error: any) {
             console.error(error);
-            alert('Failed to assign plan');
+            alert(error.message || 'Failed to assign plan');
         }
     };
 

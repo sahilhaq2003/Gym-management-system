@@ -39,7 +39,32 @@ exports.createMember = async (req, res) => {
             [first_name, last_name, email || null, phone, nic || null, dob || null, gender || null, address || null]
         );
 
-        res.status(201).json({ id: result.insertId, message: 'Member created successfully' });
+        // Send Welcome Email
+        if (email) {
+            const sendEmail = require('../utils/emailService');
+            const emailSubject = 'Welcome to Gym Management System';
+            const emailHtml = `
+                <div style="font-family: Arial, sans-serif; padding: 20px;">
+                    <h2>Welcome, ${first_name} ${last_name}!</h2>
+                    <p>You have been successfully registered as a member.</p>
+                    <div style="background-color: #f5f5f5; padding: 15px; border-radius: 5px; margin: 20px 0;">
+                        <h3>Your Member Details:</h3>
+                        <p><strong>Member ID:</strong> ${result.insertId}</p>
+                        <p><strong>Name:</strong> ${first_name} ${last_name}</p>
+                        <p><strong>Phone:</strong> ${phone}</p>
+                        ${nic ? `<p><strong>NIC:</strong> ${nic}</p>` : ''}
+                    </div>
+                    <p>Thank you for joining us!</p>
+                </div>
+            `;
+            // We don't await this to avoid blocking the response if email takes time, 
+            // or we await it if we want to ensure it sent. 
+            // Usually for UX speed we might fire and forget or use a queue. 
+            // Given the direct request, I'll await it but catch errors inside sendEmail so it doesn't crash the request.
+            await sendEmail(email, emailSubject, emailHtml);
+        }
+
+        res.status(201).json({ id: result.insertId, message: 'Member created successfully, email sent.' });
     } catch (error) {
         res.status(500).json({ message: 'Server error', error: error.message });
     }
