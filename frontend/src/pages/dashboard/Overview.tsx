@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, DollarSign, UserCheck, AlertCircle, ArrowUpRight, Zap, Dumbbell, ShoppingBag, ArrowRight } from 'lucide-react';
+import { Users, DollarSign, UserCheck, AlertCircle, ArrowUpRight, Zap, Dumbbell, ShoppingBag } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { apiRequest } from '../../lib/api';
 import { PendingApprovals } from '../../components/dashboard/PendingApprovals';
@@ -197,7 +197,7 @@ export function Overview() {
                                         border: '1px solid hsl(var(--border))',
                                         boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)'
                                     }}
-                                    formatter={(value: number) => [currencyFormatter.format(value), 'Revenue']}
+                                    formatter={(value: number | undefined) => [currencyFormatter.format(value || 0), 'Revenue'] as [string, string]}
                                     labelStyle={{ color: 'hsl(var(--muted-foreground))', marginBottom: '0.25rem' }}
                                 />
                                 <Area
