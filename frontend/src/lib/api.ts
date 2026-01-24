@@ -6,7 +6,13 @@ export async function apiRequest(endpoint: string, options: RequestInit = {}) {
         ...options.headers,
     };
 
-    const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+    let BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+    // Ensure no trailing slash
+    BASE_URL = BASE_URL.replace(/\/$/, '');
+    // Ensure it ends with /api if not present in the env var (common user mistake)
+    if (!BASE_URL.endsWith('/api')) {
+        BASE_URL += '/api';
+    }
     const response = await fetch(`${BASE_URL}${endpoint}`, {
         ...options,
         headers,
