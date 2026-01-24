@@ -30,6 +30,8 @@ app.get('/', (req, res) => {
     res.send('Gym Management System API is running...');
 });
 
+app.get('/favicon.ico', (req, res) => res.status(204).end());
+
 // Routes will be imported here
 const authRoutes = require('./routes/authRoutes');
 const memberRoutes = require('./routes/memberRoutes');

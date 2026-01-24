@@ -13,7 +13,7 @@ export async function apiRequest(endpoint: string, options: RequestInit = {}) {
     if (!BASE_URL.endsWith('/api')) {
         BASE_URL += '/api';
     }
-    console.log('Using API at:', BASE_URL); // Debugging log
+
     const response = await fetch(`${BASE_URL}${endpoint}`, {
         ...options,
         headers,
