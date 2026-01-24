@@ -11,12 +11,17 @@ dotenv.config();
 
 const app = express();
 
+const allowedOrigins = [
+    'http://localhost:5173',
+    'http://localhost:5000'
+];
+
+if (process.env.FRONTEND_URL) {
+    allowedOrigins.push(process.env.FRONTEND_URL);
+}
+
 app.use(cors({
-    origin: [
-        'https://gym-management-system-frontend-lspvmqcl5.vercel.app',
-        'http://localhost:5173',
-        'http://localhost:5000'
-    ],
+    origin: allowedOrigins,
     credentials: true
 }));
 app.use(express.json());
