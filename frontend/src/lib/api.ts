@@ -14,7 +14,9 @@ export async function apiRequest(endpoint: string, options: RequestInit = {}) {
 
     if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `API Error: ${response.statusText}`);
+        // Include specific backend error details if available
+        const detail = errorData.error || errorData.details || '';
+        throw new Error(errorData.message ? `${errorData.message}${detail ? `: ${detail}` : ''}` : `API Error: ${response.statusText}`);
     }
 
     return response.json();
