@@ -23,26 +23,27 @@ exports.requestMembership = async (req, res) => {
         if (plans.length === 0) return res.status(404).json({ message: 'Plan not found' });
         const plan = plans[0];
 
-        // 2. Create pending membership
+        // 2. Create active membership
         const startDate = new Date();
         const endDate = new Date();
         endDate.setMonth(endDate.getMonth() + plan.duration_months);
 
         const [membershipResult] = await db.execute(
-            'INSERT INTO memberships (member_id, plan_id, start_date, end_date, status, amount) VALUES (?, ?, ?, ?, "pending", ?)',
+            'INSERT INTO memberships (member_id, plan_id, start_date, end_date, status, amount) VALUES (?, ?, ?, ?, "active", ?)',
             [member_id, plan_id, startDate, endDate, plan.price]
         );
         const membershipId = membershipResult.insertId;
 
-        // 3. Create payment record (also could be pending or completed based on gateway, assuming completed "request" for now)
-        // In a real app, this might be 'pending' too until admin verifies money in bank.
-        // Let's assume the user "Paid" and admin just needs to verify and approve the membership.
+        // Update member status to active
+        await db.execute('UPDATE members SET status = "active" WHERE id = ?', [member_id]);
+
+        // 3. Create payment record
         await db.execute(
             'INSERT INTO payments (membership_id, member_id, amount, payment_method, invoice_number) VALUES (?, ?, ?, ?, ?)',
             [membershipId, member_id, plan.price, payment_method || 'online', `INV-${Date.now()}`]
         );
 
-        res.status(201).json({ message: 'Membership request submitted successfully', membershipId });
+        res.status(201).json({ message: 'Membership activated successfully', membershipId });
     } catch (error) {
         res.status(500).json({ message: 'Server error', error: error.message });
     }

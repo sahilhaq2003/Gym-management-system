@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Users, DollarSign, UserCheck, AlertCircle, ArrowUpRight, Zap, Dumbbell, ShoppingBag } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { apiRequest } from '../../lib/api';
-import { PendingApprovals } from '../../components/dashboard/PendingApprovals';
+
 
 type DashboardStats = {
     totalMembers: number;
@@ -256,13 +256,14 @@ export function Overview() {
 
 
             {/* Featured Promotions & Pending Requests */}
-            <section className="grid gap-6 md:grid-cols-2">
+            {/* Featured Promotions */}
+            <section>
                 <div>
                     <div className="flex items-center justify-between mb-6">
                         <h3 className="text-lg font-semibold text-foreground">Active Campaigns</h3>
                         <button className="text-sm font-medium text-primary hover:underline">View All</button>
                     </div>
-                    <div className="grid gap-6 sm:grid-cols-2">
+                    <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-4">
                         {[
                             { title: "Summer Shred", desc: "8-week intensity program", color: "orange", icon: Dumbbell },
                             { title: "Protein Sale", desc: "Clearance on old stock", color: "emerald", icon: ShoppingBag }
@@ -282,9 +283,6 @@ export function Overview() {
                         ))}
                     </div>
                 </div>
-
-                {/* Pending Memberships */}
-                <PendingApprovals />
             </section>
 
         </div>
