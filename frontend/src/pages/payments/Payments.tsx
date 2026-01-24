@@ -174,22 +174,60 @@ function RecordPaymentModal({ onClose, onSuccess }: { onClose: () => void; onSuc
 
         setLoading(true);
         try {
-            await apiRequest('/payments', {
-                method: 'POST',
-                body: JSON.stringify({
-                    member_id: selectedMember,
-                    plan_id: selectedPlan ? Number(selectedPlan) : null,
-                    amount: parseFloat(amount),
-                    payment_method: method
-                })
-            });
-            onSuccess();
-            onClose();
+            if (method === 'online') {
+                // Trigger PayHere Flow
+                const response = await apiRequest('/payments/payhere/initiate', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        member_id: Number(selectedMember),
+                        plan_id: selectedPlan ? Number(selectedPlan) : undefined,
+                        amount: parseFloat(amount)
+                    })
+                });
+
+                // Submit Form to PayHere
+                const actionUrl = response.sandbox
+                    ? 'https://sandbox.payhere.lk/pay/checkout'
+                    : 'https://www.payhere.lk/pay/checkout';
+
+                const form = document.createElement('form');
+                form.setAttribute('method', 'POST');
+                form.setAttribute('action', actionUrl);
+
+                Object.keys(response).forEach(key => {
+                    if (key === 'sandbox') return;
+                    const input = document.createElement('input');
+                    input.setAttribute('type', 'hidden');
+                    input.setAttribute('name', key);
+                    input.setAttribute('value', String(response[key]));
+                    form.appendChild(input);
+                });
+
+                document.body.appendChild(form);
+                form.submit();
+            } else {
+                // Standard Manual Recording
+                await apiRequest('/payments', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        member_id: selectedMember,
+                        plan_id: selectedPlan ? Number(selectedPlan) : null,
+                        amount: parseFloat(amount),
+                        payment_method: method
+                    })
+                });
+                onSuccess();
+                onClose();
+            }
+
         } catch (error) {
             console.error(error);
             alert('Failed to record payment');
-        } finally {
             setLoading(false);
+        } finally {
+            if (method !== 'online') {
+                setLoading(false);
+            }
         }
     };
 

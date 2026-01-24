@@ -42,13 +42,16 @@ db.getConnection()
     .then(connection => {
         console.log('✅ Database connected successfully');
         connection.release();
-        app.listen(PORT, () => {
-            console.log(`Server running on port ${PORT}`);
-        });
     })
     .catch(err => {
         console.error('❌ Database connection failed:', err.message);
-        // We typically want to fail hard here, but for dev we might keep it running to show the error
-        // But restarting on env change (nodemon) is better.
-        process.exit(1);
     });
+
+// Only listen if not running in Vercel (or Vercel-like environment requiring export)
+if (require.main === module) {
+    app.listen(PORT, () => {
+        console.log(`Server running on port ${PORT}`);
+    });
+}
+
+module.exports = app;

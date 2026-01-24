@@ -27,20 +27,44 @@ export function MembershipModal({ isOpen, onClose, memberId }: { isOpen: boolean
         if (!selectedPlan) return;
         setLoading(true);
         try {
-            await apiRequest('/memberships/request', {
+            // 1. Get Payment Params from Backend
+            const response = await apiRequest('/payments/payhere/initiate', {
                 method: 'POST',
                 body: JSON.stringify({
                     member_id: memberId,
-                    plan_id: selectedPlan,
-                    payment_method: 'card' // Mock
+                    plan_id: selectedPlan
                 })
             });
-            alert('Membership request submitted! Waiting for admin approval.');
-            onClose();
+
+            // 2. Submit Form to PayHere
+            // Determine URL based on sandbox flag
+            const actionUrl = response.sandbox
+                ? 'https://sandbox.payhere.lk/pay/checkout'
+                : 'https://www.payhere.lk/pay/checkout';
+
+            const form = document.createElement('form');
+            form.setAttribute('method', 'POST');
+            form.setAttribute('action', actionUrl);
+
+            // Add all PayHere parameters as hidden inputs
+            Object.keys(response).forEach(key => {
+                // Skip internal flags not meant for the form
+                if (key === 'sandbox') return;
+
+                const input = document.createElement('input');
+                input.setAttribute('type', 'hidden');
+                input.setAttribute('name', key);
+                input.setAttribute('value', String(response[key]));
+                form.appendChild(input);
+            });
+
+            document.body.appendChild(form);
+            form.submit();
+
+            // Note: Page will redirect, so no need to close modal or stop loading manually
         } catch (error) {
             console.error('Purchase failed', error);
-            alert('Failed to submit request.');
-        } finally {
+            alert('Failed to initiate payment.');
             setLoading(false);
         }
     };

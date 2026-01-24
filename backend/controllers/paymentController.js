@@ -1,5 +1,6 @@
 const db = require('../config/db');
 const sendEmail = require('../utils/emailService');
+const md5 = require('crypto-js/md5');
 
 exports.getAllPayments = async (req, res) => {
     try {
@@ -173,5 +174,172 @@ exports.getMemberPayments = async (req, res) => {
         res.json(payments);
     } catch (error) {
         res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
+exports.initiatePayHerePayment = async (req, res) => {
+    const { plan_id, member_id, amount: reqAmount } = req.body;
+
+    if (!member_id) {
+        return res.status(400).json({ message: 'Missing member_id' });
+    }
+
+    try {
+        const connection = await db.getConnection();
+        const [members] = await connection.execute('SELECT * FROM members WHERE id = ?', [member_id]);
+
+        let plan = null;
+        if (plan_id) {
+            const [plans] = await connection.execute('SELECT * FROM membership_plans WHERE id = ?', [plan_id]);
+            if (plans.length > 0) plan = plans[0];
+        }
+        connection.release();
+
+        if (members.length === 0) {
+            return res.status(404).json({ message: 'Member not found' });
+        }
+
+        const member = members[0];
+
+        // Determine Amount and Item Name
+        let finalAmount = reqAmount;
+        let itemName = 'General Payment';
+
+        if (plan) {
+            itemName = plan.name;
+            if (!finalAmount) {
+                finalAmount = plan.price;
+            }
+        }
+
+        if (!finalAmount) {
+            return res.status(400).json({ message: 'Amount is required if no plan selected' });
+        }
+
+        const merchant_id = process.env.PAYHERE_MERCHANT_ID;
+        const merchant_secret = process.env.PAYHERE_SECRET;
+        const currency = process.env.PAYHERE_CURRENCY || 'LKR';
+        const amount = Number(finalAmount).toFixed(2);
+        const order_id = `ORD-${Date.now()}`;
+
+        console.log('--- PayHere Debug Info ---');
+        console.log('Merchant ID:', merchant_id);
+        console.log('Order ID:', order_id);
+        console.log('Amount:', amount);
+        console.log('Currency:', currency);
+        console.log('Merchant Secret (First 5):', merchant_secret ? merchant_secret.substring(0, 5) : 'MISSING');
+        console.log('--------------------------');
+
+        // Generate Hash
+        // Hash = upper(md5(merchant_id + order_id + amount + currency + upper(md5(merchant_secret))))
+        const hashedSecret = md5(merchant_secret).toString().toUpperCase();
+        const hash = md5(merchant_id + order_id + amount + currency + hashedSecret).toString().toUpperCase();
+
+        const payhereParams = {
+            sandbox: true,
+            merchant_id,
+            return_url: 'http://localhost:5173/payments', // Return to Admin Payments page
+            cancel_url: 'http://localhost:5173/payments',
+            notify_url: 'http://localhost:5000/api/payments/payhere/notify',
+            order_id,
+            items: itemName,
+            amount,
+            currency,
+            hash,
+            first_name: member.first_name,
+            last_name: member.last_name,
+            email: member.email,
+            phone: member.phone || '0777123456',
+            address: member.address || 'Gym Address',
+            city: 'Colombo',
+            country: 'Sri Lanka',
+            custom_1: member_id,
+            custom_2: plan_id || '' // Send empty string if no plan
+        };
+
+        res.json(payhereParams);
+
+    } catch (error) {
+        console.error('PayHere Init Error:', error);
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
+exports.payhereNotify = async (req, res) => {
+    console.log('PayHere Notification Received:', req.body);
+
+    const {
+        merchant_id,
+        order_id,
+        payment_id,
+        payhere_amount,
+        payhere_currency,
+        status_code,
+        md5sig,
+        custom_1,
+        custom_2
+    } = req.body;
+
+    const merchant_secret = process.env.PAYHERE_SECRET;
+
+    // Verify Signature
+    const hashedSecret = md5(merchant_secret).toString().toUpperCase();
+    const localMd5sig = md5(merchant_id + order_id + payhere_amount + payhere_currency + status_code + hashedSecret).toString().toUpperCase();
+
+    if (localMd5sig !== md5sig) {
+        console.error('PayHere Signature Mismatch');
+        return res.status(400).send('Signature Mismatch');
+    }
+
+    if (status_code === '2') {
+        const member_id = custom_1;
+        const plan_id = custom_2;
+        const amount = payhere_amount;
+
+        const connection = await db.getConnection();
+        try {
+            await connection.beginTransaction();
+
+            // 1. Check if order processed already
+            // (Optional: check payment_id in payments table)
+
+            // 2. Create Membership
+            const [plans] = await connection.execute('SELECT * FROM membership_plans WHERE id = ?', [plan_id]);
+            if (plans.length === 0) throw new Error('Plan not found');
+            const plan = plans[0];
+
+            const startDate = new Date();
+            const endDate = new Date();
+            endDate.setMonth(endDate.getMonth() + plan.duration_months);
+
+            const [memResult] = await connection.execute(
+                'INSERT INTO memberships (member_id, plan_id, start_date, end_date, amount, status) VALUES (?, ?, ?, ?, ?, ?)',
+                [member_id, plan_id, startDate, endDate, amount, 'active']
+            );
+            const membershipId = memResult.insertId;
+
+            // 3. Record Payment
+            await connection.execute(
+                'INSERT INTO payments (member_id, membership_id, amount, payment_method, invoice_number) VALUES (?, ?, ?, ?, ?)',
+                [member_id, membershipId, amount, 'payhere_online', order_id]
+            );
+
+            // 4. Update Member Status
+            await connection.execute('UPDATE members SET status = "active" WHERE id = ?', [member_id]);
+
+            await connection.commit();
+            console.log('PayHere Payment Processed Successfully for Order:', order_id);
+            res.status(200).send('Payment Verified and Processed');
+
+        } catch (error) {
+            await connection.rollback();
+            console.error('PayHere Processing Error:', error);
+            res.status(500).send('Internal Server Error');
+        } finally {
+            connection.release();
+        }
+    } else {
+        console.log('PayHere Payment Failed/Pending. Status Code:', status_code);
+        res.status(200).send('Status Received');
     }
 };
