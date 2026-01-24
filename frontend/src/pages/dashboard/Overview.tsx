@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+// Force rebuild
 import { useNavigate } from 'react-router-dom';
 import { Users, DollarSign, UserCheck, AlertCircle, ArrowUpRight, Zap, Dumbbell, ShoppingBag } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
