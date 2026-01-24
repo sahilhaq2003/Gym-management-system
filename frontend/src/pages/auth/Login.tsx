@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { apiRequest } from '../../lib/api';
 import { Dumbbell, Loader2, ArrowLeft } from 'lucide-react';
 
 export function Login() {
@@ -18,17 +19,13 @@ export function Login() {
         setError('');
 
         try {
-            const response = await fetch('http://localhost:5000/api/auth/login', {
+            const data = await apiRequest('/auth/login', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, password }),
             });
 
-            const data = await response.json();
-
-            if (!response.ok) {
-                throw new Error(data.message || 'Login failed');
-            }
+            // apiRequest handles response.ok check and json parsing internally
+            // if (!response.ok) logic is inside apiRequest
 
             login(data.token, data.user);
 

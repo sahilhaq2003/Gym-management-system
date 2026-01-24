@@ -1,6 +1,6 @@
 import { startRegistration } from '@simplewebauthn/browser';
 
-const API_URL = 'http://localhost:5000/api/biometrics';
+const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api') + '/biometrics';
 
 export async function checkSupport() {
     return await startRegistration ? true : false;
