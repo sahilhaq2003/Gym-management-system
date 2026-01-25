@@ -3,6 +3,7 @@ import { useAuth } from '../../context/AuthContext';
 import { apiRequest } from '../../lib/api';
 import { MembershipModal } from '../../components/dashboard/MembershipModal';
 import { UserCheck, Calendar, Trophy, QrCode, Clock, Dumbbell, Zap, Activity } from 'lucide-react';
+import { MemberPaymentHistory } from '../../components/dashboard/MemberPaymentHistory';
 
 export function MemberOverview() {
     const { user } = useAuth();
@@ -266,6 +267,9 @@ export function MemberOverview() {
                             </p>
                         </div>
                     </div>
+
+                    {/* Payment History Widget */}
+                    {user?.id && <MemberPaymentHistory memberId={user.id} />}
                 </div>
 
             </div>
